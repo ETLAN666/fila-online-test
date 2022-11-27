@@ -3,7 +3,7 @@
   <v-app id="inspire">
     <v-app-bar
         app
-        :color="userForm.barColor"
+        :color="barColor"
         dark
     >
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
@@ -23,12 +23,12 @@
       ></v-text-field>
       <v-spacer></v-spacer>
       <v-btn icon
-      :to="logout"
+      @click="logOut"
       >
         <v-icon>mdi-logout</v-icon>
       </v-btn>
-      <v-btn icon @click="changeUser">
-        <v-icon>{{userForm.userIcon}}</v-icon>
+      <v-btn icon>
+        <v-icon>{{userIcon}}</v-icon>
       </v-btn>
       <v-btn icon>
         <v-icon>mdi-bell</v-icon>
@@ -48,7 +48,7 @@
             size="64"
         ></v-avatar>
 
-        <div>john@vuetifyjs.com</div>
+        <div>{{email}}</div>
       </v-sheet>
 
       <v-divider></v-divider>
@@ -82,45 +82,55 @@
 </template>
 
 <script>
+import {useStore} from 'vuex'
+import {computed} from 'vue'
+import {useRouter} from 'vue-router'
+
 export default {
   name: "TeacherLayout",
   data: () => ({
-    userForm:{
-      user:"teacher",
-      userIcon:"mdi-card-account-details-star-outline",
-      barColor:"red darken-3"
-    },
-    // studentForm:{
-    //   user:"student",
-    //   userIcon:"mdi-mdi-account-school-outline",
-    //   barColor:"blue darken-3"
-    // },
-    logout:"/",
     drawer: null,
-    links: [
-      ['mdi-file-search-outline', '查询试卷','/teacher/paperList'],
-      ['mdi-cube', '在线题库','/teacher/market/sin_q'],
-      ['mdi-folder-edit-outline', '在线组卷','/teacher/construct'],
-      ['mdi-alpha-r-box-outline', '作答详情','/teacher/paperResult'],
-    ],
+    // links: [
+    //   ['mdi-file-search-outline', '查询试卷','/teacher/paperList'],
+    //   ['mdi-cube', '在线题库','/teacher/market/sin_q'],
+    //   ['mdi-folder-edit-outline', '在线组卷','/teacher/construct'],
+    //   ['mdi-alpha-r-box-outline', '作答详情','/teacher/paperResult'],
+    // ],
   }),
-  methods:{
-    changeUser(){
-      if(this.userForm.user==="teacher"){
-        this.userForm={
-          user:"student",
-          userIcon:"mdi-account-school-outline",
-          barColor:"blue darken-3"
-        }
-      }
-      else{
-        this.userForm={
-          user:"teacher",
-          userIcon:"mdi-card-account-details-star-outline",
-          barColor:"red darken-3"
-        }
-      }
+  setup(){
+    const store = useStore()
+    const router = useRouter()
+
+    let email = computed(()=>store.state.user.email)
+    let name = computed(()=>store.state.user.name)
+    let role = computed(() => store.state.user.role)
+
+    let userIcon = computed(() => store.state.user.userIcon)
+    let barColor = computed(() => store.state.user.barColor)
+
+    let links = computed(()=> store.state.user.links)
+
+    function logOut(){
+      window.localStorage.setItem("token", '')
+      router.push({path:'/'})
     }
+
+
+    return {
+      email,
+      name,
+      role,
+      userIcon,
+      barColor,
+      links,
+      logOut
+    }
+
+
+  },
+
+  methods:{
+
 
   }
 }

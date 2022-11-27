@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@chenfengyuan/vue-countdown": "2",
+    "@element-plus/icons-vue": "^2.0.10",
     "@mdi/font": "^7.0.96",
+    "axios": "^1.2.0",
     "core-js": "^3.8.3",
     "element-plus": "^2.2.22",
     "jquery": "^3.6.1",
@@ -19,7 +21,8 @@
     "vue": "3",
     "vue-router": "^4.0.13",
     "vue-timer-hook": "^1.0.33",
-    "vuetify": "3.0.1"
+    "vuetify": "3.0.1",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

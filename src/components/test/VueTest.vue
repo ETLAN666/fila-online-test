@@ -5,14 +5,41 @@
       class="py-8 px-6"
       fluid
   >
+<!--    <el-input-->
+<!--        v-model="input"-->
+<!--        class="w-50 m-2"-->
+<!--        size="large"-->
+<!--        :placeholder="input"-->
+<!--    />-->
+<!--    <v-btn-->
+<!--        class="ma-2"-->
+<!--        outlined-->
+<!--        color="indigo"-->
+<!--        @click="changeRole(input)"-->
+<!--    >-->
+<!--      获取数据-->
+<!--    </v-btn>-->
+<!--    <v-card-title>-->
+<!--      Test Data:${{role}}-->
+<!--    </v-card-title>-->
+
+    <el-input
+        v-model="input"
+        class="w-50 m-2"
+        size="large"
+        :placeholder="input"
+    />
     <v-btn
         class="ma-2"
         outlined
         color="indigo"
+        @click="JumpInto"
     >
-      Outlined Button
+      获取数据
     </v-btn>
-
+    <v-card-title>
+      Test Data:${{role}}
+    </v-card-title>
   </v-container>
 
 
@@ -22,37 +49,61 @@
 
 <script>
 
+import {testSend} from '@/api/index'
+import {useStore} from 'vuex'
+import {computed} from 'vue'
+import {useRouter} from 'vue-router'
 
 export default {
   name: "VueTest",
   data: () => ({
-    formLabelWidth: '120px',
-    text_questions:[
-      {
-        id:"1",
-        description:"请列举出白居易在诗词方面的代表作",
-        text:"",
-        img:true,
-        img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-        answer:"琵琶行",
-        dialogFormVisible:false,
-      },
-      {
-        id:"2",
-        description:"请预测一下本次卡塔尔世界杯决赛名单",
-        text:"",
-        img:false,
-        img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-        answer:"法国",
-        dialogFormVisible:false,
-      },
-    ],
-  }),
-  methods:{
-    returnTop(){
-      window.scrollTo(0,0);
+    input:"zerocamera@qq.com",
+    userInfo:{
+      id:"27469@qq.com"
     },
-  }
+    result:""
+
+
+  }),
+  setup(){
+    const store = useStore()
+    const router = useRouter()
+
+    let role = computed(() => store.state.user.role)
+
+    function changeRole(data){
+      store.commit("setRole",data)
+      console.log(store.state.user.role)
+    }
+
+    function JumpInto(){
+      console.log('dasdasdasd')
+      router.push({path:'/teacher'})
+    }
+
+    return {
+      role,
+      changeRole,
+      JumpInto
+    }
+  },
+  methods:{
+    async getData() {
+      // this.$axios.get('/api/')
+      // .then(
+      //     (response)=>{
+      //       console.log(response);
+      //       this.data= response.data;
+      //     })
+      // .catch(
+      //     (error)=>{
+      //       console.log(error)
+      //     })
+      const r = await testSend({email: this.input})
+      this.result = r
+      console.log(r)
+    }
+  },
 }
 </script>
 

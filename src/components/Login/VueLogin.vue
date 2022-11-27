@@ -8,17 +8,18 @@
           <h1 class="form-title"><i class="fas fa-user" style="color:#55a0ff;"></i> <br> LOGIN  <hr></h1>
 
           <div class="form-container animated fadeIn" style="animation-delay:.7s;">
-            <form method="POST" action="{{ route('login') }}">
+<!--            <form method="POST" action="{{ route('login') }}">-->
+            <form action="">
 
-              <label for=""><i class="fas fa-at"></i> Email </label>
-              <input type="email" name="email" placeholder="E-mail">
+              <label for="logEmail"><i class="fas fa-at"></i> 邮箱账号 </label>
+              <input id="logEmail" type="email" name="email" v-model="logForm.email" placeholder="E-mail">
 
-              <label for=""><i class="fab fa-slack-hash"></i> Password </label>
-              <input type="password" name="password" placeholder="Password">
+              <label for="logPassword"><i class="fab fa-slack-hash"></i> 密码 </label>
+              <input id="logPassword" type="password" name="password" v-model="logForm.password" placeholder="Password">
 
               <div class="submit-buttons">
-                <input type="submit" value="Connect">
-                <input type="button" value="Sign Up" class="btn-register">
+                <input type="button" value="登录" @click="logConfirm(logForm)">
+                <input type="button" value="注册" class="btn-register">
               </div>
 
             </form>
@@ -32,25 +33,39 @@
           <h1 class="form-title "><i class="fas fa-user-plus" style="color:#57efc4;"></i> <br> REGISTER <hr></h1>
 
           <div class="form-container animated fadeIn" style="animation-delay:.7s;">
-            <form method="POST" action="{{ route('register') }}">
+<!--            <form method="POST" action="{{ route('register') }}">-->
+            <form action="">
 
 
-              <label for=""><i class="fab fa-amilia"></i> Name </label>
-              <input  type="text" name="name" placeholder="Name" required autofocus>
+              <label for="regName"><i class="fab fa-amilia"></i> 用户名 </label>
+              <input id="regName" type="text" name="name" v-model="regForm.userName" placeholder="Name" required autofocus>
 
-              <label for=""><i class="fas fa-at"></i> Email </label>
-              <input type="email" name="email" placeholder="E-mail">
+              <label for="regEmail"><i class="fas fa-at"></i> 邮箱账号 </label>
+              <input id="regEmail" type="email" name="email" v-model="regForm.email" placeholder="E-mail">
 
-              <label for=""><i class="fab fa-slack-hash"></i> Password </label>
-              <input type="password" name="password" placeholder="Password">
+              <label for="regPassword"><i class="fab fa-slack-hash"></i> 密码 </label>
+              <input id="regPassword" type="password" name="password" v-model="regForm.password" placeholder="Password">
 
-              <label for=""><i class="fab fa-slack-hash"></i> Confirm Password </label>
-              <input type="password" name="password_confirmation"  placeholder="Password">
+              <label for="confPassword"><i class="fab fa-slack-hash"></i> 确认密码 </label>
+              <input id="confPassword" type="password" name="password_confirmation" v-model="regForm.confirm_password"  placeholder="Password">
+
+
+              <div style="padding-bottom: 16px">
+                <label for="QR"><i class="fab fa-slack-hash"></i> 填写验证码 </label>
+                <el-input id="QR" v-model="regForm.code" placeholder="Please input the verification code ">
+                  <template #append>
+                    <v-icon @click="sendQR">mdi-email-arrow-left-outline</v-icon>
+                  </template>
+                </el-input>
+              </div>
+
 
               <div class="submit-buttons">
-                <input type="submit" value="Register" style="background:#55efc4;">
-                <input type="button" value="Sign In"  class="btn-login">
+                <input type="button" id="regButton" value="注册" @click="regConfirm" style="background:#55efc4;">
+                <input type="button" value="登录"  class="btn-login">
               </div>
+
+
 
             </form>
           </div>
@@ -68,8 +83,72 @@
 
 <script>
 import $ from "jquery";
+import { ElMessage } from 'element-plus'
+import { registerCode, registerConfirm} from '@/api/index'
+import {useStore} from 'vuex'
+import {computed} from 'vue';
+
+
 export default {
-  name: "VueLogin"
+  name: "VueLogin",
+  data:()=>({
+      isQR:false,
+      code:"",
+      regForm:{
+        userName:"",
+        email:"",
+        password:"",
+        confirm_password:"",
+        code:""
+      },
+      logForm:{
+        email:"",
+        password:"",
+      }
+  }),
+  setup(){
+    const store = useStore()
+    let role = computed(function () {
+      return store.state.user.role
+
+    });
+
+    function logConfirm(data){
+      console.log(data)
+      store.dispatch("initialSate",data)
+    }
+
+
+    return {
+      role,
+      logConfirm
+    }
+  },
+  methods:{
+    async sendQR() {
+      const result = await registerCode({email: this.regForm.email})
+      console.log(result)
+      ElMessage({
+        message: '验证码已发送到您的邮箱，请注意查收',
+        type: 'success',
+      })
+    },
+
+    async regConfirm(){
+
+      if (this.regForm.password === this.regForm.confirm_password) {
+        const result = await registerConfirm({form:this.regForm})
+        console.log(result)
+        ElMessage({
+          message: '注册成功',
+          type: 'success',
+        })
+      }
+      else{
+        ElMessage.error('确认密码不一致')
+      }
+    },
+  }
 }
 
 $(document).ready(function(){
@@ -81,7 +160,7 @@ $(document).ready(function(){
       $('.register').removeClass(' zoomOut');
       $('#login-form').css('animation-delay','0');
       $('.register').css(' animation-delay','0');
-      $
+
     },10)
 
     $('#login-form').addClass('animated zoomOut');
@@ -104,6 +183,8 @@ $(document).ready(function(){
     $('#login-form').css('display','block');
     $('.login-container').css('height','70vh');
   })
+
+
 
 })
 </script>
