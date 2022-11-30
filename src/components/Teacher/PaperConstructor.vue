@@ -52,7 +52,7 @@
               <v-btn
                   :color="item.color"
                   variant="outlined"
-                  @click="paperViewer"
+                  @click="paperPublish(collections)"
               >
                 确认发布
               </v-btn>
@@ -66,16 +66,22 @@
     <el-dialog v-model="form.dialogFormVisible" title="Shipping address">
       <el-form :model="form">
         <el-form-item label="试卷标题" :label-width="formLabelWidth">
-          <el-input v-model="form.title" autocomplete="off" />
+          <el-input v-model="form.name" autocomplete="off" />
         </el-form-item>
         <el-form-item label="试卷命题时间" :label-width="formLabelWidth">
-          <el-input v-model="form.date" autocomplete="off" />
+          <el-input v-model="form.start" autocomplete="off" />
         </el-form-item>
         <el-form-item label="有效截止期" :label-width="formLabelWidth">
-          <el-input v-model="form.deadline" autocomplete="off" />
+          <el-input v-model="form.ddl" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="限时" :label-width="formLabelWidth">
+          <el-input v-model="form.time" autocomplete="off" />
         </el-form-item>
         <el-form-item label="试卷总分值" :label-width="formLabelWidth">
           <el-input v-model="form.score" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="试卷描述" :label-width="formLabelWidth">
+          <el-input v-model="form.note" autocomplete="off" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -118,6 +124,10 @@
 </template>
 
 <script>
+import {useStore} from 'vuex'
+import {computed, toRaw} from "vue";
+
+
 export default {
   name: "PaperConstructor",
   data:()=>({
@@ -156,11 +166,13 @@ export default {
     ],
     formLabelWidth: '120px',
     form:{
-      id:"7",
-      title:"",
-      data:"",
-      deadline:"",
-      score:"",
+      name:"综合卷",
+      start:"2022-11-22",
+      ddl:"2022-12-10",
+      time:"60",
+      score:"100",
+      seq:[],
+      note:"试题总分100分，重点考察本学期第5~8章的课本内容，限时一小时完成",
       dialogFormVisible:false,
     },
     links:[
@@ -186,14 +198,55 @@ export default {
       },
     ],
   }),
+  setup(){
+    const store = useStore()
+    let collections = computed(() => store.state.user.collections)
+
+    function initialViewData(){
+      store.commit("set_from_collections")
+    }
+
+    function publishPaper(paper){
+      store.dispatch("postNewPaper",paper)
+    }
+
+
+    return {
+      collections,
+      initialViewData,
+      publishPaper
+    }
+
+
+  },
   methods:{
-    paperViewer(){
-      this.preview = this.preview === false;
-    },
     addInfo(){
       this.paperInfo=true
       this.form.dialogFormVisible=false
     },
+    paperViewer(){
+      this.initialViewData()
+      this.preview = this.preview !== true;
+    },
+    async paperPublish(questions){
+      let tmp = toRaw(questions)
+      console.log("tmp:",tmp)
+      let seq = []
+      tmp.forEach((item, index, arr) => {
+        seq.push(item.id.toString())
+        console.log(index)
+        console.log(arr)
+        console.log("item:",item)
+      })
+      // for (let key in tmp){
+      //   console.log("key:",key)
+      //   seq.push(key.id)
+      // }
+      this.form.seq = seq
+      console.log("form:",this.form)
+      await this.publishPaper(this.form)
+      console.log("finish")
+    }
   }
 }
 </script>

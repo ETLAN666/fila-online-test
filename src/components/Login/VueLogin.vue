@@ -86,6 +86,7 @@ import $ from "jquery";
 import { ElMessage } from 'element-plus'
 import { registerCode, registerConfirm} from '@/api/index'
 import {useStore} from 'vuex'
+import {useRouter} from 'vue-router'
 import {computed} from 'vue';
 
 
@@ -108,23 +109,35 @@ export default {
   }),
   setup(){
     const store = useStore()
+    const router = useRouter()
     let role = computed(function () {
       return store.state.user.role
 
     });
 
-    function logConfirm(data){
-      console.log(data)
-      store.dispatch("initialSate",data)
+    function InitialSettings(data){
+      return store.dispatch("initialState",data)
+    }
+
+    function JumpInto(){
+      router.push({path:'/teacher'})
     }
 
 
     return {
       role,
-      logConfirm
+      InitialSettings,
+      JumpInto
     }
   },
   methods:{
+     async logConfirm(data){
+       console.log('start')
+       await this.InitialSettings(data)
+       console.log('end')
+       this.JumpInto()
+    },
+
     async sendQR() {
       const result = await registerCode({email: this.regForm.email})
       console.log(result)

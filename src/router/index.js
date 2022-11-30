@@ -157,19 +157,22 @@ const router = createRouter({
     routes,
 });
 
-router.beforeEach((to, from,next) =>{
-    let token = window.localStorage.getItem('token')
-    if (token === ''){
-        console.log('return!!!')
-
-    }
-    else{
-        // console.log(window.localStorage.getItem('token'))
-        // console.log(typeof (window.localStorage.getItem('token')))
-        // console.log('to.name:',to.name)
-        // console.log('from.name',from.name)
-        next()
-    }
-})
+// router.beforeEach((to, from,next) =>{
+//     let token = window.localStorage.getItem('token')
+//     console.log(window.localStorage.getItem('token'))
+//     console.log(typeof (window.localStorage.getItem('token')))
+//     if (token === ''){
+//         console.log('return!!!')
+//         next('/')
+//
+//     }
+//     else{
+//         // console.log(window.localStorage.getItem('token'))
+//         // console.log(typeof (window.localStorage.getItem('token')))
+//         // console.log('to.name:',to.name)
+//         // console.log('from.name',from.name)
+//         next()
+//     }
+// })
 
 export default router;

@@ -1,6 +1,6 @@
 <template>
 <div>
-  <h2 class="background"><span>试卷1</span></h2>
+  <h2 class="background"><span>{{paperName}}</span></h2>
   <div v-show="!isTeacher">
     <vue-countdown :time="60 * 60 * 1000" v-slot="{ days, hours, minutes, seconds }">
       Time Remaining：{{ days }} days, {{ hours }} hours, {{ minutes }} minutes, {{ seconds }} seconds.
@@ -21,7 +21,7 @@
       </v-tabs>
       <v-spacer></v-spacer>
 
-<div style="padding-right: 30px">
+<div v-show="!isTeacher" style="padding-right: 30px">
   <v-btn
       class="ma-2"
       outlined
@@ -43,7 +43,7 @@
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">
+        <el-button type="primary" @click="handPaperResult">
           确认
         </el-button>
       </span>
@@ -51,19 +51,17 @@
   </el-dialog>
 
 
-
-
-
-
   <router-view></router-view>
 </div>
 </template>
 
 <script>
+import {useStore} from 'vuex'
+import {computed, toRaw} from 'vue'
+
 export default {
   name: "PaperView",
   data:()=>({
-    isTeacher:true,
     dialogVisible: false,
     links:[
       {
@@ -88,7 +86,79 @@ export default {
       },
     ],
   }),
+  setup(){
+    const store = useStore()
+    let isTeacher = computed(() => store.state.user.isTeacher)
+    let paperName = computed(() => store.state.user.paperName)
+
+    let sin_q = computed(() => store.state.user.sin_selections)
+    let multi_q = computed(() => store.state.user.multi_selections)
+    let judge_q = computed(() => store.state.user.judge_questions)
+    let fill_q = computed(() => store.state.user.fill_questions)
+    let text_q = computed(() => store.state.user.text_questions)
+    let email_num = computed(() => store.state.user.email)
+
+     function postPaperResult(payload){
+      store.dispatch("postNewResults", payload)
+     }
+
+    return {
+      isTeacher,
+      paperName,
+      sin_q,
+      multi_q,
+      judge_q,
+      fill_q,
+      text_q,
+      email_num,
+      postPaperResult
+    }
+  },
   methods:{
+    async handPaperResult(){
+          let arr = []
+          this.getResValues(arr, this.sin_q)
+          this.getResValues(arr, this.multi_q)
+          this.getResValues(arr, this.judge_q)
+          this.getResValues(arr, this.fill_q)
+          this.getResValues(arr, this.text_q)
+
+          await this.postPaperResult(arr)
+
+          this.dialogVisible = false
+    },
+
+    getResValues(array, questions){
+      let tmp = toRaw(questions)
+      console.log("tmp:",tmp)
+      tmp.forEach((item, index, arr) => {
+        let x = {}
+        x['qid'] = item.id
+        x['name'] = toRaw(this.paperName)
+        x['email'] = toRaw(this.email_num)
+        if (item.type === '单选题'){
+          x['my_answer'] = item.radios
+        }
+        else if( item.type === '多选题'){
+          x['my_answer'] = item.radios
+        }
+        else if( item.type === '判断题'){
+          x['my_answer'] = item.radios
+        }
+        else if( item.type === '填空题'){
+          x['my_answer'] = item.text
+        }
+        else if( item.type === '问答题'){
+          x['my_answer'] = item.text
+        }
+
+        array.push(x)
+        console.log(index)
+        console.log(arr)
+        console.log("item:",item)
+      })
+      console.log("array now:",array)
+    }
   }
 }
 </script>

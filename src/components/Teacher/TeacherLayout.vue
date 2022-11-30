@@ -58,6 +58,7 @@
             v-for="[icon, text, route] in links"
             :key="icon"
             link
+            @click="selectFunction(text)"
             :to="route"
         >
           <template v-slot:prepend>
@@ -83,7 +84,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed} from 'vue'
+import {computed, toRaw} from 'vue'
 import {useRouter} from 'vue-router'
 
 export default {
@@ -115,6 +116,24 @@ export default {
       router.push({path:'/'})
     }
 
+    function JumpInto(path){
+      router.push({path:path})
+    }
+
+    function getQuestions(){
+      store.commit("set_paperView",  false)
+      return store.dispatch("getQuestions")
+    }
+
+    function getPaperList(){
+      store.commit("set_paperView",  true)
+      return store.dispatch("getPapers")
+    }
+
+    function getResultList(info){
+      return store.dispatch("getResults", info)
+    }
+
 
     return {
       email,
@@ -123,15 +142,46 @@ export default {
       userIcon,
       barColor,
       links,
-      logOut
+      logOut,
+      JumpInto,
+      getQuestions,
+      getPaperList,
+      getResultList
     }
 
 
   },
 
   methods:{
+    async selectFunction(info){
+      console.log(info)
+      if (info === '在线题库' || info === '试卷题库'){
+        console.log(1)
+        await this.getQuestions()
+        let path = '/teacher/market/sin_q'
+        this.JumpInto(path)
 
-
+      }
+      else if (info === '查询试卷'){
+        console.log(2)
+        await this.getPaperList()
+        let path = '/teacher/paperList'
+        this.JumpInto(path)
+      }
+      else if (info === '在线组卷'){
+        console.log(3)
+        let path = '/teacher/construct'
+        this.JumpInto(path)
+      }
+      else if (info === '作答详情'){
+        console.log(4)
+        let tmp = toRaw(this.email)
+        console.log("email tmp:", tmp)
+        await this.getResultList(tmp)
+        let path = '/teacher/paperResult'
+        this.JumpInto(path)
+      }
+    }
   }
 }
 </script>

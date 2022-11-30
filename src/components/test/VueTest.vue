@@ -5,23 +5,6 @@
       class="py-8 px-6"
       fluid
   >
-<!--    <el-input-->
-<!--        v-model="input"-->
-<!--        class="w-50 m-2"-->
-<!--        size="large"-->
-<!--        :placeholder="input"-->
-<!--    />-->
-<!--    <v-btn-->
-<!--        class="ma-2"-->
-<!--        outlined-->
-<!--        color="indigo"-->
-<!--        @click="changeRole(input)"-->
-<!--    >-->
-<!--      获取数据-->
-<!--    </v-btn>-->
-<!--    <v-card-title>-->
-<!--      Test Data:${{role}}-->
-<!--    </v-card-title>-->
 
     <el-input
         v-model="input"
@@ -33,7 +16,7 @@
         class="ma-2"
         outlined
         color="indigo"
-        @click="JumpInto"
+        @click="testMap"
     >
       获取数据
     </v-btn>
@@ -77,7 +60,7 @@ export default {
     }
 
     function JumpInto(){
-      console.log('dasdasdasd')
+      console.log('Jump to...')
       router.push({path:'/teacher'})
     }
 
@@ -99,9 +82,22 @@ export default {
       //     (error)=>{
       //       console.log(error)
       //     })
+      console.log(this.role)
       const r = await testSend({email: this.input})
       this.result = r
       console.log(r)
+    },
+    testMap(){
+      var arr = [{id:1},{id:2},{id:3}]
+      // var newArray = arr.map(x=>{})
+      var newArray = []
+      arr.forEach(function(item){
+        let x = {}
+        x['id'] = item.id
+        x['gender'] = 'male'
+        newArray.push(x)
+      })
+      console.log(newArray)
     }
   },
 }
