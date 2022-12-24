@@ -125,7 +125,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed, toRaw} from "vue";
+import {onMounted, computed, toRaw} from "vue";
 
 
 export default {
@@ -201,6 +201,13 @@ export default {
   setup(){
     const store = useStore()
     let collections = computed(() => store.state.user.collections)
+    let show = computed(() => store.state.user.showData)
+
+    onMounted(()=>{
+      collections = computed(() => store.state.user.collections)
+    })
+
+
 
     function initialViewData(){
       store.commit("set_from_collections")
@@ -214,7 +221,8 @@ export default {
     return {
       collections,
       initialViewData,
-      publishPaper
+      publishPaper,
+      show
     }
 
 

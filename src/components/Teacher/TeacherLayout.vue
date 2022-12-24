@@ -42,13 +42,22 @@
           color="grey-lighten-4"
           class="pa-4"
       >
+<!--        <v-avatar-->
+<!--            class="mb-4"-->
+<!--            color="grey-darken-1"-->
+<!--            size="64"-->
+<!--        ></v-avatar>-->
         <v-avatar
             class="mb-4"
-            color="grey-darken-1"
-            size="64"
-        ></v-avatar>
+            size="80"
+        >
+          <v-img
+              :src = avatar
+              alt="John"
+          ></v-img>
+        </v-avatar>
 
-        <div>{{email}}</div>
+        <div>{{name}}</div>
       </v-sheet>
 
       <v-divider></v-divider>
@@ -84,19 +93,14 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed, toRaw} from 'vue'
+import {onMounted, computed, toRaw} from 'vue'
 import {useRouter} from 'vue-router'
 
 export default {
   name: "TeacherLayout",
   data: () => ({
     drawer: null,
-    // links: [
-    //   ['mdi-file-search-outline', '查询试卷','/teacher/paperList'],
-    //   ['mdi-cube', '在线题库','/teacher/market/sin_q'],
-    //   ['mdi-folder-edit-outline', '在线组卷','/teacher/construct'],
-    //   ['mdi-alpha-r-box-outline', '作答详情','/teacher/paperResult'],
-    // ],
+    show: false
   }),
   setup(){
     const store = useStore()
@@ -105,15 +109,30 @@ export default {
     let email = computed(()=>store.state.user.email)
     let name = computed(()=>store.state.user.name)
     let role = computed(() => store.state.user.role)
+    let avatar = computed(() => store.state.user.avatar)
 
     let userIcon = computed(() => store.state.user.userIcon)
     let barColor = computed(() => store.state.user.barColor)
 
     let links = computed(()=> store.state.user.links)
 
+    onMounted(()=>{
+      console.log("teacherLayout mounted...")
+      email = computed(()=>store.state.user.email)
+      name = computed(()=>store.state.user.name)
+      role = computed(() => store.state.user.role)
+
+      userIcon = computed(() => store.state.user.userIcon)
+      barColor = computed(() => store.state.user.barColor)
+
+      links = computed(()=> store.state.user.links)
+    })
+
     function logOut(){
       window.localStorage.setItem("token", '')
+      store.commit('setShowData', false)
       router.push({path:'/'})
+      window.location.reload()
     }
 
     function JumpInto(path){
@@ -139,6 +158,7 @@ export default {
       email,
       name,
       role,
+      avatar,
       userIcon,
       barColor,
       links,
@@ -146,10 +166,15 @@ export default {
       JumpInto,
       getQuestions,
       getPaperList,
-      getResultList
+      getResultList,
     }
 
 
+  },
+  mounted() {
+    setTimeout(()=>{
+      this.show = true
+    },100)
   },
 
   methods:{

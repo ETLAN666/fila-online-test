@@ -54,8 +54,12 @@
                 <label for="QR"><i class="fab fa-slack-hash"></i> 填写验证码 </label>
                 <el-input id="QR" v-model="regForm.code" placeholder="Please input the verification code ">
                   <template #append>
-                    <v-icon @click="sendQR">mdi-email-arrow-left-outline</v-icon>
+                    <el-button @click="getCountdown" :disabled="totalTime <60">{{content}}</el-button>
+<!--                    <v-icon @click="sendQR">mdi-email-arrow-left-outline</v-icon>-->
+<!--                    <v-icon icon="md:home"></v-icon>-->
                   </template>
+
+                  <v-icon icon="md:home"></v-icon>
                 </el-input>
               </div>
 
@@ -94,6 +98,8 @@ export default {
   name: "VueLogin",
   data:()=>({
       isQR:false,
+      totalTime: 60,
+      content: "发送验证码",
       code:"",
       regForm:{
         userName:"",
@@ -120,8 +126,17 @@ export default {
     }
 
     function JumpInto(){
-      router.push({path:'/teacher'})
+      if (store.state.user.role === ''){
+        ElMessage({
+          message: '用户不存在或密码错误',
+          type: 'error',
+        })
+      }
+      else{
+        router.push({path:'/teacher'})
+      }
     }
+
 
 
     return {
@@ -135,7 +150,26 @@ export default {
        console.log('start')
        await this.InitialSettings(data)
        console.log('end')
-       this.JumpInto()
+       setTimeout(()=>{
+         this.JumpInto()
+       },1000)
+    },
+    async getCountdown() {
+      const result = await registerCode({email: this.regForm.email})
+      console.log(result)
+      ElMessage({
+        message: '验证码已发送到您的邮箱，请注意查收',
+        type: 'success',
+      })
+      let clock =  window.setInterval(() => {
+        this.content = this. totalTime + 's后重新发送';
+        this.totalTime --;
+        if(this. totalTime < 0){
+          this. totalTime = 60;
+          this.content = "重新发送验证码";
+          window.clearInterval(clock);
+        }
+      }, 1000);
     },
 
     async sendQR() {

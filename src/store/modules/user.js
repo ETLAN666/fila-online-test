@@ -1,6 +1,6 @@
 import { loginConfirm, getQuestionsSets, setSinQ, setMulQ, addQ,modifyQ,
         setJudgeQ, setFillQ, setTextQ, getPaperList, deleteQ, postPaper,
-        postPaperResult, getPaperResult} from '@/api/index'
+        postPaperResult, getPaperResult, uploadFile} from '@/api/index'
 import {ElMessage} from "element-plus";
 
 
@@ -8,9 +8,12 @@ import {ElMessage} from "element-plus";
 const user = {
     state: () => ({
         //base info
-        role:'student',
+        role:'',
         email:'',
         name:'',
+        avatar:'https://pic1.zhimg.com/v2-7c168a484333f45b2315c9d1afa13d74_r.jpg?source=1940ef5c',
+        token:'',
+        showData:false,
 
         //style
         userIcon:"mdi-account-school-outline",
@@ -29,53 +32,53 @@ const user = {
         paperName:"试卷",
         sin_selections:[{
             id:"1",
-            description:"中断向量提供 （）。",
-            selection:["入口地址","返回地址","寄存器地址","下一条指令的地址"],
+            description:"",
+            selection:["","","",""],
             radios:"",
             img:true,
-            img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-            answer:"返回地址",
+            img_url:"",
+            answer:"",
             dialogFormVisible:false,
             star:"black"
         }],
         multi_selections:[{
             id:"1",
-            description:"美国西海岸的州（）。",
-            selection:["加利福利亚州","德克萨斯州","俄亥俄州","新泽西州"],
+            description:"",
+            selection:["","","",""],
             radios:[],
             img:true,
-            img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-            answer:"加利福利亚州",
+            img_url:"",
+            answer:"",
             dialogFormVisible:false,
             star:"black"
         }],
         judge_questions:[ {
             id:"1",
-            description:"中共一大召开于1921年",
-            selection:["正确","错误"],
+            description:"",
+            selection:["",""],
             img:true,
-            img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-            answer:"正确",
+            img_url:"",
+            answer:"",
             dialogFormVisible:false,
             star:"black"
         }],
         fill_questions:[  {
             id:"2",
-            description:"红军长征开始于（）年",
+            description:"",
             text:"",
             img:true,
-            img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-            answer:"1934",
+            img_url:"",
+            answer:"",
             dialogFormVisible:false,
             star:"black"
         }],
         text_questions:[ {
             id:"2",
-            description:"请预测一下本次卡塔尔世界杯决赛名单",
+            description:"",
             text:"",
             img:false,
-            img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-            answer:"法国",
+            img_url:"",
+            answer:"",
             dialogFormVisible:false,
             star:"black"
         }],
@@ -88,6 +91,12 @@ const user = {
     getters: {
         getRole(state){
             return state.role
+        },
+        getShow(state){
+            return state.showData
+        },
+        getToken(state){
+            return state.token
         },
         getEmail(state){
             return state.email
@@ -105,8 +114,18 @@ const user = {
     },
 
     mutations: {
+        setAvatar(state, info){
+            state.avatar = info
+        },
+        setToken(state, token){
+            state.token = token
+        },
         setRole(state, role){
             state.role = role
+        },
+        setShowData(state, show){
+            state.showData = show
+
         },
         setEmail(state, email){
             state.email = email
@@ -173,6 +192,61 @@ const user = {
             for (let key in state.collections){
                 state.sequence.push(key.id)
             }
+        },
+        setImgURL(state, payload){
+            if (payload.type === '单选题'){
+                state.sin_selections = state.sin_selections.map((item, index, arr)=>{
+                    if (item.id === payload.id){
+                        console.log("before item.img_url: ", item.img_url)
+                        item.img_url = payload.img_url
+                        console.log("after item.img_url: ", item.img_url)
+                        console.log(index)
+                        console.log(arr)
+                        return true
+                    }
+                })
+            }
+            else if(payload.type === '多选题'){
+                state.multi_selections = state.multi_selections.map((item, index, arr)=>{
+                    if (item.id === payload.id){
+                        item.img_url = payload.img_url
+                        console.log(index)
+                        console.log(arr)
+                        return true
+                    }
+                })
+            }
+            else if(payload.type === '判断题'){
+                state.judge_questions = state.judge_questions.map((item, index, arr)=>{
+                    if (item.id === payload.id){
+                        item.img_url = payload.img_url
+                        console.log(index)
+                        console.log(arr)
+                        return true
+                    }
+                })
+            }
+            else if(payload.type === '填空题'){
+                state.fill_questions = state.fill_questions.map((item, index, arr)=>{
+                    if (item.id === payload.id){
+                        item.img_url = payload.img_url
+                        console.log(index)
+                        console.log(arr)
+                        return true
+                    }
+                })
+            }
+            else if(payload.type === '问答题'){
+                state.text_questions = state.text_questions.map((item, index, arr)=>{
+                    if (item.id === payload.id){
+                        item.img_url = payload.img_url
+                        console.log(index)
+                        console.log(arr)
+                        return true
+                    }
+                })
+            }
+            return false
         },
         setDialog(state, payload){
             if (payload.type === '单选题'){
@@ -440,16 +514,29 @@ const user = {
 
     },
     actions: {
+        uploadImg(store, info) {
+            return new Promise((resolve, reject)=>{
+                uploadFile(info).then(result=>{
+                    resolve(result)
+                }).catch(err=>{
+                    reject(err)
+                })
+            })
+        },
+
        initialState(store, info) {
            return new Promise((resolve, reject)=>{
                console.log(1)
                loginConfirm({email: info.email, password: info.password}).then(result=>{
-                   console.log(result)
+                   console.log("result: ",result)
                    window.localStorage.setItem("token", result.token)
                    store.commit('setRole',result.role)
+                   store.commit('setAvatar',result.avatar)
                    store.commit('setEmail',result.email)
                    store.commit('setName',result.name)
-                   console.log(2)
+                   store.commit('setToken',result.token)
+                   store.commit('setShowData',true)
+                   console.log('token:',window.localStorage.getItem('token'))
                    if (result.role === 'student'){
                        console.log('set student style!')
                    }

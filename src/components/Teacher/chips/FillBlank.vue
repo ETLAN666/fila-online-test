@@ -39,7 +39,7 @@
 
       <v-row>
         <v-col
-            v-for="item in fill_questions"
+            v-for="(item, index) in fill_questions"
             :key="item.id"
             cols="12"
         >
@@ -47,29 +47,29 @@
               class="mx-auto"
               max-width="600"
           >
-            <v-card-title>填空题 第{{item.id}}题
+            <v-card-title>填空题 第{{index+1}}题
               <div style="color: #54a0ff; display: inline">
                 （2分）
               </div>
             </v-card-title>
 
-            <v-card-subtitle>
+            <v-card-text>
               <div style="color: black; font-size: medium">
                 {{item.description}}
               </div>
+            </v-card-text>
 
-            </v-card-subtitle>
 
-            <div v-if="item.img" style="padding-top: 10px">
+            <div style="padding-top: 10px">
               <v-img
-                  height="200"
+                  max-height="400"
                   :src="item.img_url"
               >
 
               </v-img>
             </div>
 
-            <v-card-text>
+            <v-card-text class="text-h5 py-2">
               <div>
                 <v-text-field label="Label" v-model="item.text"></v-text-field>
               </div>
@@ -127,6 +127,31 @@
               <el-form-item label="问题描述" :label-width="formLabelWidth">
                 <el-input v-model="item.description" autocomplete="off" />
               </el-form-item>
+              <el-form-item label="题目图片" :label-width="formLabelWidth">
+                <v-file-input
+                    v-model="files"
+                    color="deep-purple-accent-4"
+                    counter
+                    label="File input"
+                    placeholder="Select your files"
+                    prepend-icon="mdi-camera"
+                    variant="outlined"
+                    :show-size="1000"
+                >
+                  <template v-slot:selection="{ fileNames }">
+                    <template v-for="(fileName, index) in fileNames" :key="index">
+                      <v-chip
+                          color="deep-purple-accent-4"
+                          label
+                          size="small"
+                          class="mr-2"
+                      >
+                        {{ fileName }}
+                      </v-chip>
+                    </template>
+                  </template>
+                </v-file-input>
+              </el-form-item>
               <el-form-item label="参考答案" :label-width="formLabelWidth">
                 <el-input v-model="item.answer" autocomplete="off" />
               </el-form-item>
@@ -134,7 +159,7 @@
             <template #footer>
               <span class="dialog-footer">
                   <el-button @click="openEdit(item)">Cancel</el-button>
-                  <el-button type="primary" @click="EditPost(item)">
+                  <el-button type="primary" @click="this.EditFormPost(item)">
                     Confirm
                   </el-button>
                </span>
@@ -169,7 +194,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed} from 'vue'
+import {onMounted, computed} from 'vue'
 import {ElMessage} from "element-plus";
 
 export default {
@@ -177,28 +202,7 @@ export default {
   data:()=>({
     formLabelWidth: '120px',
     collections:[],
-    // fill_questions:[
-    //   {
-    //     id:"1",
-    //     description:"中共一大召开于（）年",
-    //     text:"",
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"1921",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   },
-    //   {
-    //     id:"2",
-    //     description:"红军长征开始于（）年",
-    //     text:"",
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"1934",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   },
-    // ],
+    files: [],
     form:{
       id:"7",
       description:"红军长征开始于（）年",
@@ -215,6 +219,15 @@ export default {
     let isTeacher = computed(() => store.state.user.isTeacher)
     let fill_questions = computed(() => store.state.user.fill_questions)
     let isPaperView = computed(() => store.state.user.paperView)
+    let show = computed(() => store.state.user.showData)
+
+
+    onMounted(()=>{
+      console.log("fillBlank mounted...")
+      isTeacher = computed(() => store.state.user.isTeacher)
+      fill_questions = computed(() => store.state.user.fill_questions)
+      isPaperView = computed(() => store.state.user.paperView)
+    })
 
 
 
@@ -278,16 +291,12 @@ export default {
       store.commit('setDialog',item)
     }
 
-    function EditPost(item){
-      let payload = {
-        'id': item.id,
-        'type': '填空题',
-        'content':item.description,
-        'choice':'',
-        'answer':item.answer,
-        'url':''
-      }
-      store.dispatch("editPost", payload)
+    function EditPost(payload){
+      return store.dispatch("editPost", payload)
+    }
+
+    function setImgURL(payload){
+      store.commit('setImgURL',payload)
     }
 
 
@@ -299,10 +308,42 @@ export default {
       deleteQuestion,
       addQuestion,
       openEdit,
-      EditPost
+      EditPost,
+      setImgURL,
+      show
     }
   },
   methods:{
+    async EditFormPost(item){
+      let formData = new FormData()
+      let tmp = ""
+      formData.append('id', item.id)
+      formData.append('type', '填空题')
+      formData.append('content', item.description)
+      formData.append('answer', item.answer)
+      formData.append('choice', '')
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+
+
+        await this.EditPost(formData).then(value=>{
+          tmp = value
+          console.log("tmp:",tmp)
+          let info = {
+            'id': item.id,
+            'img_url': tmp,
+          }
+          this.setImgURL(info)
+        })
+      }
+      else{
+        formData.append('url', '')
+        await this.EditPost(formData)
+      }
+    },
+
     returnTop(){
       window.scrollTo(0,0);
     },

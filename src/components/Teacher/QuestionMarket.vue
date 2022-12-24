@@ -22,6 +22,8 @@
 </template>
 
 <script>
+import {useStore} from 'vuex'
+import {computed} from 'vue'
 
 export default {
   name: "QuestionMarket",
@@ -50,12 +52,15 @@ export default {
     ],
 
   }),
+  setup(){
+    const store = useStore()
+    let show = computed(() => store.state.user.showData)
+
+    return {
+      show
+    }
+  },
   methods:{
-
-
-
-
-
   }
 }
 </script>

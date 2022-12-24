@@ -39,7 +39,7 @@
 
       <v-row>
         <v-col
-            v-for="item in judge_questions"
+            v-for="(item, index) in judge_questions"
             :key="item.id"
             cols="12"
         >
@@ -47,19 +47,25 @@
               class="mx-auto"
               max-width="600"
           >
-            <v-card-title>判断题 第{{item.id}}题
+            <v-card-title>判断题 第{{index+1}}题
               <div style="color: #54a0ff; display: inline">
                 （1分）
               </div>
 
             </v-card-title>
 
-            <v-card-subtitle>
+            <v-card-text>
               <div style="color: black; font-size: medium">
                 {{item.description}}
               </div>
+            </v-card-text>
 
-            </v-card-subtitle>
+<!--            <v-card-subtitle class="text-h5 py-2">-->
+<!--              <div style="color: black; font-size: medium">-->
+<!--                {{item.description}}-->
+<!--              </div>-->
+
+<!--            </v-card-subtitle>-->
 
             <div v-if="item.img" style="padding-top: 10px">
               <v-img
@@ -141,7 +147,31 @@
               <el-form-item label="问题描述" :label-width="formLabelWidth">
                 <el-input v-model="item.description" autocomplete="off" />
               </el-form-item>
-
+              <el-form-item label="题目图片" :label-width="formLabelWidth">
+                <v-file-input
+                    v-model="files"
+                    color="deep-purple-accent-4"
+                    counter
+                    label="File input"
+                    placeholder="Select your files"
+                    prepend-icon="mdi-camera"
+                    variant="outlined"
+                    :show-size="1000"
+                >
+                  <template v-slot:selection="{ fileNames }">
+                    <template v-for="(fileName, index) in fileNames" :key="index">
+                      <v-chip
+                          color="deep-purple-accent-4"
+                          label
+                          size="small"
+                          class="mr-2"
+                      >
+                        {{ fileName }}
+                      </v-chip>
+                    </template>
+                  </template>
+                </v-file-input>
+              </el-form-item>
               <el-form-item label="参考答案" :label-width="formLabelWidth">
                 <el-input v-model="item.answer" autocomplete="off" />
               </el-form-item>
@@ -149,7 +179,7 @@
             <template #footer>
               <span class="dialog-footer">
                   <el-button @click="openEdit(item)">Cancel</el-button>
-                  <el-button type="primary" @click="EditPost(item)">
+                  <el-button type="primary" @click="this.EditFormPost(item)">
                     Confirm
                   </el-button>
                </span>
@@ -182,7 +212,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed} from 'vue'
+import {onMounted, computed} from 'vue'
 import {ElMessage} from "element-plus";
 
 export default {
@@ -190,28 +220,7 @@ export default {
   data:()=>({
     formLabelWidth: '120px',
     collections:[],
-    // judge_questions:[
-    //   {
-    //     id:"1",
-    //     description:"中共一大召开于1921年",
-    //     selection:["正确","错误"],
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"正确",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   },
-    //   {
-    //     id:"2",
-    //     description:"贞观之治时期的唐朝皇帝是唐太宗李世民",
-    //     selection:["正确","错误"],
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"正确",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   }
-    // ],
+    files: [],
     form:{
       id:"7",
       description:"贞观之治时期的唐朝皇帝是唐太宗李世民",
@@ -228,6 +237,13 @@ export default {
     let isTeacher = computed(() => store.state.user.isTeacher)
     let judge_questions = computed(() => store.state.user.judge_questions)
     let isPaperView = computed(() => store.state.user.paperView)
+    let show = computed(() => store.state.user.showData)
+
+    onMounted(()=>{
+      isTeacher = computed(() => store.state.user.isTeacher)
+      judge_questions = computed(() => store.state.user.judge_questions)
+      isPaperView = computed(() => store.state.user.paperView)
+    })
 
     function collectQuestion(item){
       if (item.star==="black"){
@@ -289,16 +305,17 @@ export default {
       store.commit('setDialog',item)
     }
 
-    function EditPost(item){
-      let payload = {
-        'id': item.id,
-        'type': '判断题',
-        'content':item.description,
-        'choice':'',
-        'answer':item.answer,
-        'url':''
-      }
-      store.dispatch("editPost", payload)
+    function EditPost(payload){
+
+      // let payload = {
+      //   'id': item.id,
+      //   'type': '判断题',
+      //   'content':item.description,
+      //   'choice':'',
+      //   'answer':item.answer,
+      //   'url':''
+      // }
+      return store.dispatch("editPost", payload)
     }
 
     function solo_select(item, choice){
@@ -306,6 +323,10 @@ export default {
       tmp['item'] = item
       tmp['choice'] = choice
       store.commit('set_judge_radios',tmp)
+    }
+
+    function setImgURL(payload){
+      store.commit('setImgURL',payload)
     }
 
     return {
@@ -317,41 +338,43 @@ export default {
       addQuestion,
       openEdit,
       EditPost,
-      solo_select
+      solo_select,
+      setImgURL,
+      show
     }
   },
   methods:{
+    async EditFormPost(item){
+      let formData = new FormData()
+      let tmp = ""
+      formData.append('id', item.id)
+      formData.append('type', '判断题')
+      formData.append('content', item.description)
+      formData.append('answer', item.answer)
+      formData.append('choice', '')
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+
+        await this.EditPost(formData).then(value=>{
+          tmp = value
+          console.log("tmp:",tmp)
+          let info = {
+            'id': item.id,
+            'img_url': tmp,
+          }
+          this.setImgURL(info)
+        })
+      }
+      else{
+        formData.append('url', '')
+        await this.EditPost(formData)
+      }
+    },
     returnTop(){
       window.scrollTo(0,0);
     },
-    // addQuestion(){
-    //   this.form.dialogFormVisible = false
-    //   this.judge_questions.push(this.form)
-    // },
-    // collectQuestion(item){
-    //   if (item.star==="black"){
-    //     item.star = "yellow"
-    //     this.collections.push(item)
-    //     // console.log(this.collections.length)
-    //   }
-    //   else{
-    //     item.star = "black"
-    //     this.collections.forEach(function (element,index,array){
-    //       if (element.id===item.id){
-    //         array.splice(index,1);
-    //       }
-    //     })
-    //     // console.log(this.collections.length)
-    //   }
-    //
-    // },
-    // deleteQuestion(id){
-    //   this.judge_questions.forEach(function (item,index,array){
-    //     if (item.id===id){
-    //       array.splice(index,1);
-    //     }
-    //   })
-    // }
   }
 }
 </script>

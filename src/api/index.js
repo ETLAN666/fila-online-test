@@ -15,7 +15,19 @@ export function testSend(params){
     })
 }
 
-
+/**
+ * @description: 文件上传
+ * @param {*} params
+ * @return {*}
+ * @author: ET
+ */
+export function uploadFile(params){
+    return service ({
+        url:'/upload/file',
+        method:'post',
+        data:params
+    })
+}
 
 
 /**

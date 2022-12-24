@@ -57,7 +57,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed, toRaw} from 'vue'
+import {onMounted, computed, toRaw} from 'vue'
 
 export default {
   name: "PaperView",
@@ -97,6 +97,16 @@ export default {
     let fill_q = computed(() => store.state.user.fill_questions)
     let text_q = computed(() => store.state.user.text_questions)
     let email_num = computed(() => store.state.user.email)
+    let show = computed(() => store.state.user.showData)
+
+    onMounted(()=>{
+      sin_q = computed(() => store.state.user.sin_selections)
+      multi_q = computed(() => store.state.user.multi_selections)
+      judge_q = computed(() => store.state.user.judge_questions)
+      fill_q = computed(() => store.state.user.fill_questions)
+      text_q = computed(() => store.state.user.text_questions)
+      email_num = computed(() => store.state.user.email)
+    })
 
      function postPaperResult(payload){
       store.dispatch("postNewResults", payload)
@@ -111,7 +121,8 @@ export default {
       fill_q,
       text_q,
       email_num,
-      postPaperResult
+      postPaperResult,
+      show
     }
   },
   methods:{

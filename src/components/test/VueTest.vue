@@ -1,29 +1,69 @@
 <template>
 <div id="app">
 
-  <v-container
-      class="py-8 px-6"
-      fluid
+
+
+<!--  <img :src="imageUrl" height="150" v-if="imageUrl" alt="tmp"/>-->
+<!--  <v-text-field label="Select Image" @click='pickFile' v-model='imageName' prepend-icon="mdi-file-image"></v-text-field>-->
+<!--  <input-->
+<!--      type="file"-->
+<!--      style="display: none"-->
+<!--      ref="image"-->
+<!--      accept="image/jpeg, image/jpg, image/png"-->
+<!--      @change="onFilePicked"-->
+<!--  >-->
+<v-card
+    class="mx-auto"
+    width="800"
+>
+  <v-div style="padding: 10px">
+    <v-file-input
+        v-model="files"
+        color="deep-purple-accent-4"
+        counter
+        label="File input"
+        placeholder="Select your files"
+        prepend-icon="mdi-camera"
+        variant="outlined"
+        :show-size="1000"
+    >
+      <template v-slot:selection="{ fileNames }">
+        <template v-for="(fileName, index) in fileNames" :key="index">
+          <v-chip
+              color="deep-purple-accent-4"
+              label
+              size="small"
+              class="mr-2"
+          >
+            {{ fileName }}
+          </v-chip>
+        </template>
+      </template>
+    </v-file-input>
+    <v-btn
+        color="secondary"
+        prepend-icon="mdi-cloud-upload"
+        @click="testUpload"
+    >
+      Upload
+    </v-btn>
+  </v-div>
+  <v-img
+      :src=imageUrl
+      max-height="125"
+      cover
+      class="bg-grey-lighten-2"
+  ></v-img>
+
+  <v-img
+      max-height="200"
+      src = ""
   >
 
-    <el-input
-        v-model="input"
-        class="w-50 m-2"
-        size="large"
-        :placeholder="input"
-    />
-    <v-btn
-        class="ma-2"
-        outlined
-        color="indigo"
-        @click="testMap"
-    >
-      获取数据
-    </v-btn>
-    <v-card-title>
-      Test Data:${{role}}
-    </v-card-title>
-  </v-container>
+  </v-img>
+
+</v-card>
+
 
 
 
@@ -36,15 +76,21 @@ import {testSend} from '@/api/index'
 import {useStore} from 'vuex'
 import {computed} from 'vue'
 import {useRouter} from 'vue-router'
+import axios from "axios";
 
 export default {
   name: "VueTest",
   data: () => ({
+    files: [],
+    imageUrl: 'https://picsum.photos/350/165?random',
+    imageFile: null,
+    imageName: '',
     input:"zerocamera@qq.com",
     userInfo:{
       id:"27469@qq.com"
     },
-    result:""
+    result:"",
+    radioGroup: [],
 
 
   }),
@@ -53,6 +99,10 @@ export default {
     const router = useRouter()
 
     let role = computed(() => store.state.user.role)
+
+    function sendImage(data){
+      return store.dispatch('uploadImg',data)
+    }
 
     function changeRole(data){
       store.commit("setRole",data)
@@ -66,11 +116,27 @@ export default {
 
     return {
       role,
+      sendImage,
       changeRole,
       JumpInto
     }
   },
   methods:{
+    async testUpload(){
+      let formData = new FormData()
+      let tmp = ""
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+        tmp = await this.sendImage(formData)
+        console.log("tmp:",tmp)
+        this.imageUrl = tmp
+      }
+
+    },
+
+
     async getData() {
       // this.$axios.get('/api/')
       // .then(
@@ -98,14 +164,98 @@ export default {
         newArray.push(x)
       })
       console.log(newArray)
+    },
+    testOut(){
+      console.log(this.radioGroup)
+    },
+    clear(){
+      this.radioGroup=[]
+    },
+    handleAvatarSuccess(res, file) {
+      this.imageUrl = URL.createObjectURL(file.raw);
+    },
+    beforeAvatarUpload(file) {
+      const isJPG = file.type === 'image/jpeg';
+      const isLt2M = file.size / 1024 / 1024 < 2;
+
+      if (!isJPG) {
+        this.$message.error('上传头像图片只能是 JPG 格式!');
+      }
+      if (!isLt2M) {
+        this.$message.error('上传头像图片大小不能超过 2MB!');
+      }
+      return isJPG && isLt2M;
+    },
+
+    pickFile() {
+      this.$refs.image.click()
+    },
+    onFilePicked(e) {
+      const files = e.target.files
+      if(files[0] !== undefined) {
+        this.imageName = files[0].name
+        if (this.imageName.lastIndexOf('.') <= 0) {
+          return
+        }
+        const fr = new FileReader()
+        fr.readAsDataURL(files[0])
+        fr.addEventListener('load', () => {
+          this.imageUrl = fr.result
+          this.imageFile = files[0]
+        })
+      } else {
+        this.imageName = ''
+        this.imageFile = ''
+        this.imageUrl = ''
+      }
+    },
+
+    submitForm() {
+      let formData = new FormData()
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+
+        axios.post('/api/upload/file', formData)
+            .then(res => {
+              console.log(res)
+            })
+            .catch(err => {
+              console.log(err)
+            })
+      }
+
+
+
     }
   },
 }
 </script>
 
 <style scoped>
-body{
-  padding-right: 0px !important;
+
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
   overflow: hidden;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409EFF;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
+.avatar {
+  width: 178px;
+  height: 178px;
+  display: block;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-<div>
+<div v-show="show">
 
   <div style=" text-align: center;
       right: 10px;
@@ -43,7 +43,7 @@
 
     <v-row>
       <v-col
-          v-for="item in sin_selections"
+          v-for="(item, index) in sin_selections"
           :key="item.id"
           cols="12"
       >
@@ -51,18 +51,18 @@
             class="mx-auto"
             max-width="600"
         >
-          <v-card-title>单选题 第{{item.id}}题
+          <v-card-title>单选题 第{{index+1}}题
             <div style="color: #54a0ff; display: inline">
               （2分）
             </div>
 
           </v-card-title>
 
-          <v-card-subtitle>
+          <v-card-text>
             <div style="color: black; font-size: medium">
               {{item.description}}
             </div>
-          </v-card-subtitle>
+          </v-card-text>
 
           <div v-if="item.img" style="padding-top: 10px">
             <v-img
@@ -156,6 +156,31 @@
             <el-form-item label="问题描述" :label-width="formLabelWidth">
               <el-input v-model="item.description" autocomplete="off" />
             </el-form-item>
+            <el-form-item label="题目图片" :label-width="formLabelWidth">
+              <v-file-input
+                  v-model="files"
+                  color="deep-purple-accent-4"
+                  counter
+                  label="File input"
+                  placeholder="Select your files"
+                  prepend-icon="mdi-camera"
+                  variant="outlined"
+                  :show-size="1000"
+              >
+                <template v-slot:selection="{ fileNames }">
+                  <template v-for="(fileName, index) in fileNames" :key="index">
+                    <v-chip
+                        color="deep-purple-accent-4"
+                        label
+                        size="small"
+                        class="mr-2"
+                    >
+                      {{ fileName }}
+                    </v-chip>
+                  </template>
+                </template>
+              </v-file-input>
+            </el-form-item>
             <el-form-item label="选项一" :label-width="formLabelWidth">
               <el-input v-model="item.selection[0]" autocomplete="off" />
             </el-form-item>
@@ -175,7 +200,7 @@
           <template #footer>
               <span class="dialog-footer">
                   <el-button @click="openEdit(item)">Cancel</el-button>
-                  <el-button type="primary" @click="EditPost(item)">
+                  <el-button type="primary" @click="this.EditFormPost(item)">
                     Confirm
                   </el-button>
                </span>
@@ -221,7 +246,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed} from 'vue'
+import {reactive, onMounted, computed} from 'vue'
 import {ElMessage} from "element-plus";
 
 export default {
@@ -229,30 +254,8 @@ export default {
   data:()=>({
     formLabelWidth: '120px',
     collections:[],
-    // sin_selections:[
-    //   {
-    //     id:"1",
-    //     description:"中断向量提供 （）。",
-    //     selection:["入口地址","返回地址","寄存器地址","下一条指令的地址"],
-    //     radios:"",
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"返回地址",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   },
-    //   {
-    //     id:"2",
-    //     description:"以下谁是罗马帝国的皇帝（）。",
-    //     selection:["奥古斯都","凯撒","亚历山大","亚瑟"],
-    //     radios:"",
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"亚历山大",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   }
-    // ],
+    files: [],
+    show:false,
     form:{
       id:"7",
       description:"以下谁是罗马帝国的皇帝（）。",
@@ -270,6 +273,21 @@ export default {
     let isTeacher = computed(() => store.state.user.isTeacher)
     let sin_selections = computed(()=>store.state.user.sin_selections)
     let isPaperView = computed(() => store.state.user.paperView)
+
+    const state = reactive({
+      show: false
+    })
+
+    onMounted(()=>{
+      console.log("sin_q mounted...")
+      console.log("show: ",state.show)
+      isTeacher = computed(() => store.state.user.isTeacher)
+      sin_selections = computed(()=>store.state.user.sin_selections)
+      isPaperView = computed(() => store.state.user.paperView)
+      state.show = store.getters.getShow
+      console.log("show: ",state.show)
+    })
+
 
     function solo_select(item, choice){
       console.log("choice",choice)
@@ -339,16 +357,20 @@ export default {
       store.commit('setDialog',item)
     }
 
-    function EditPost(item){
-      let payload = {
-        'id': item.id,
-        'type': '单选题',
-        'content':item.description,
-        'choice':item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3],
-        'answer':item.answer,
-        'url':''
-      }
-      store.dispatch("editPost", payload)
+    function EditPost(payload){
+      // let payload = {
+      //   'id': item.id,
+      //   'type': '单选题',
+      //   'content':item.description,
+      //   'choice':item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3],
+      //   'answer':item.answer,
+      //   'url':''
+      // }
+      return store.dispatch("editPost", payload)
+    }
+
+    function setImgURL(payload){
+      store.commit('setImgURL',payload)
     }
 
     return {
@@ -360,42 +382,51 @@ export default {
       addQuestion,
       openEdit,
       EditPost,
-      solo_select
+      solo_select,
+      setImgURL
 
     }
   },
+  mounted() {
+    console.log("test...")
+    setTimeout(()=>{
+      this.show = true
+    }, 100)
+
+  },
   methods:{
+    async EditFormPost(item){
+      let formData = new FormData()
+      let tmp = ""
+      formData.append('id', item.id)
+      formData.append('type', '单选题')
+      formData.append('content', item.description)
+      formData.append('answer', item.answer)
+      formData.append('choice', item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3])
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+
+
+        await this.EditPost(formData).then(value=>{
+          tmp = value
+          console.log("tmp:",tmp)
+          let info = {
+            'id': item.id,
+            'img_url': tmp,
+          }
+          this.setImgURL(info)
+        })
+      }
+      else{
+        formData.append('url', '')
+        await this.EditPost(formData)
+      }
+    },
     returnTop(){
       window.scrollTo(0,0);
     },
-    // addQuestion(){
-    //   this.form.dialogFormVisible = false
-    //   this.sin_selections.push(this.form)
-    // },
-    // collectQuestion(item){
-    //   if (item.star==="black"){
-    //     item.star = "yellow"
-    //     this.collections.push(item)
-    //     // console.log(this.collections.length)
-    //   }
-    //   else{
-    //     item.star = "black"
-    //     this.collections.forEach(function (element,index,array){
-    //       if (element.id===item.id){
-    //         array.splice(index,1);
-    //       }
-    //     })
-    //     // console.log(this.collections.length)
-    //   }
-    //
-    // },
-    // deleteQuestion(id){
-    //   this.sin_selections.forEach(function (item,index,array){
-    //     if (item.id===id){
-    //       array.splice(index,1);
-    //     }
-    //   })
-    // }
   }
 }
 </script>

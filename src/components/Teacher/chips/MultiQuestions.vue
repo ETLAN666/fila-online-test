@@ -39,7 +39,7 @@
 
       <v-row>
         <v-col
-            v-for="item in multi_selections"
+            v-for="(item, index) in multi_selections"
             :key="item.id"
             cols="12"
         >
@@ -47,18 +47,18 @@
               class="mx-auto"
               max-width="600"
           >
-            <v-card-title>多选题 第{{item.id}}题
+            <v-card-title>多选题 第{{index+1}}题
               <div style="color: #54a0ff; display: inline">
                 （3分）
               </div>
 
             </v-card-title>
 
-            <v-card-subtitle>
+            <v-card-text>
               <div style="color: black; font-size: medium">
                 {{item.description}}
               </div>
-            </v-card-subtitle>
+            </v-card-text>
 
             <div v-if="item.img" style="padding-top: 10px">
               <v-img
@@ -128,9 +128,9 @@
             <v-card-actions v-show="isTeacher&&!isPaperView">
               <v-list-item class="w-100">
 
-                <v-list-item-title>My Answer</v-list-item-title>
+<!--                <v-list-item-title>My Answer</v-list-item-title>-->
 
-                <v-list-item-subtitle>{{item.my_answer}}</v-list-item-subtitle>
+<!--                <v-list-item-subtitle>{{item.my_answer}}</v-list-item-subtitle>-->
 
                 <template v-slot:append>
                   <div class="justify-self-end">
@@ -154,6 +154,31 @@
               <el-form-item label="问题描述" :label-width="formLabelWidth">
                 <el-input v-model="item.description" autocomplete="off" />
               </el-form-item>
+              <el-form-item label="题目图片" :label-width="formLabelWidth">
+                <v-file-input
+                    v-model="files"
+                    color="deep-purple-accent-4"
+                    counter
+                    label="File input"
+                    placeholder="Select your files"
+                    prepend-icon="mdi-camera"
+                    variant="outlined"
+                    :show-size="1000"
+                >
+                  <template v-slot:selection="{ fileNames }">
+                    <template v-for="(fileName, index) in fileNames" :key="index">
+                      <v-chip
+                          color="deep-purple-accent-4"
+                          label
+                          size="small"
+                          class="mr-2"
+                      >
+                        {{ fileName }}
+                      </v-chip>
+                    </template>
+                  </template>
+                </v-file-input>
+              </el-form-item>
               <el-form-item label="选项一" :label-width="formLabelWidth">
                 <el-input v-model="item.selection[0]" autocomplete="off" />
               </el-form-item>
@@ -173,7 +198,7 @@
             <template #footer>
               <span class="dialog-footer">
                   <el-button @click="openEdit(item)">Cancel</el-button>
-                  <el-button type="primary" @click="EditPost(item)">
+                  <el-button type="primary" @click="this.EditFormPost(item)">
                     Confirm
                   </el-button>
                </span>
@@ -219,7 +244,7 @@
 
 <script>
 import {useStore} from 'vuex'
-import {computed} from 'vue'
+import {onMounted, computed} from 'vue'
 import {ElMessage} from "element-plus";
 
 export default {
@@ -227,30 +252,7 @@ export default {
   data:()=>({
     formLabelWidth: '120px',
     collections:[],
-    // multi_selections:[
-    //   {
-    //     id:"1",
-    //     description:"美国西海岸的州（）。",
-    //     selection:["加利福利亚州","德克萨斯州","俄亥俄州","新泽西州"],
-    //     radios:[],
-    //     img:true,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"加利福利亚州",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   },
-    //   {
-    //     id:"2",
-    //     description:"中国古代的大发明（）。",
-    //     selection:["火药","指南针","造纸术","蒸汽机"],
-    //     radios:[],
-    //     img:false,
-    //     img_url:"https://cdn.pixabay.com/photo/2020/07/12/07/47/bee-5396362_1280.jpg",
-    //     answer:"火药,指南针,造纸术",
-    //     dialogFormVisible:false,
-    //     star:"black"
-    //   }
-    // ],
+    files: [],
     form:{
       id:"7",
       description:"中国古代的大发明（）。",
@@ -268,6 +270,13 @@ export default {
     let isTeacher = computed(() => store.state.user.isTeacher)
     let multi_selections = computed(() => store.state.user.multi_selections)
     let isPaperView = computed(() => store.state.user.paperView)
+    let show = computed(() => store.state.user.showData)
+
+    onMounted(()=>{
+      isTeacher = computed(() => store.state.user.isTeacher)
+      multi_selections = computed(() => store.state.user.multi_selections)
+      isPaperView = computed(() => store.state.user.paperView)
+    })
 
     function multi_select(item, choice){
       let tmp = {}
@@ -336,17 +345,23 @@ export default {
       store.commit('setDialog',item)
     }
 
-    function EditPost(item){
-      let payload = {
-        'id': item.id,
-        'type': '多选题',
-        'content':item.description,
-        'choice':item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3],
-        'answer':item.answer,
-        'url':''
-      }
-      store.dispatch("editPost", payload)
+    function EditPost(payload){
+      // let payload = {
+      //   'id': item.id,
+      //   'type': '多选题',
+      //   'content':item.description,
+      //   'choice':item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3],
+      //   'answer':item.answer,
+      //   'url':''
+      // }
+      // store.dispatch("editPost", payload)
+      return store.dispatch("editPost", payload)
     }
+
+    function setImgURL(payload){
+      store.commit('setImgURL',payload)
+    }
+
 
     return {
       isTeacher,
@@ -357,41 +372,44 @@ export default {
       addQuestion,
       openEdit,
       EditPost,
-      multi_select
+      multi_select,
+      setImgURL,
+      show
     }
   },
   methods:{
+    async EditFormPost(item){
+      let formData = new FormData()
+      let tmp = ""
+      formData.append('id', item.id)
+      formData.append('type', '多选题')
+      formData.append('content', item.description)
+      formData.append('answer', item.answer)
+      formData.append('choice', item.selection[0]+','+ item.selection[1]+','+ item.selection[2]+','+ item.selection[3])
+      if (this.files.length > 0){
+        console.log("files:",this.files[0])
+        formData.append('img_file', this.files[0])
+        formData.append('img_name', this.files[0].name)
+
+
+        await this.EditPost(formData).then(value=>{
+          tmp = value
+          console.log("tmp:",tmp)
+          let info = {
+            'id': item.id,
+            'img_url': tmp,
+          }
+          this.setImgURL(info)
+        })
+      }
+      else{
+        formData.append('url', '')
+        await this.EditPost(formData)
+      }
+    },
     returnTop(){
       window.scrollTo(0,0);
     },
-    // addQuestion(){
-    //   this.form.dialogFormVisible = false
-    //   this.multi_selections.push(this.form)
-    // },
-    // collectQuestion(item){
-    //   if (item.star==="black"){
-    //     item.star = "yellow"
-    //     this.collections.push(item)
-    //     // console.log(this.collections.length)
-    //   }
-    //   else{
-    //     item.star = "black"
-    //     this.collections.forEach(function (element,index,array){
-    //       if (element.id===item.id){
-    //         array.splice(index,1);
-    //       }
-    //     })
-    //     // console.log(this.collections.length)
-    //   }
-    //
-    // },
-    // deleteQuestion(id){
-    //   this.multi_selections.forEach(function (item,index,array){
-    //     if (item.id===id){
-    //       array.splice(index,1);
-    //     }
-    //   })
-    // }
   }
 }
 </script>

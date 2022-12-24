@@ -48,41 +48,11 @@
 <script>
 import {useRouter} from 'vue-router'
 import {useStore} from 'vuex'
-import {computed, toRaw} from 'vue'
+import {onMounted, computed, toRaw} from 'vue'
 // import {useRouter} from 'vue-router'
 export default {
   name: "PaperList",
   data:()=>({
-    // tableData:[
-    //   {
-    //     date: '2016-05-03',
-    //     deadline: '2016-08-03',
-    //     total_score:"100",
-    //     name: '试卷1',
-    //     address: 'No. 189, Grove St, Los Angeles',
-    //   },
-    //   {
-    //     date: '2016-05-02',
-    //     deadline: '2016-08-09',
-    //     total_score:"100",
-    //     name: '试卷2',
-    //     address: 'No. 189, Grove St, Los Angeles',
-    //   },
-    //   {
-    //     date: '2016-05-04',
-    //     deadline: '2016-08-10',
-    //     total_score:"100",
-    //     name: '试卷3',
-    //     address: 'No. 189, Grove St, Los Angeles',
-    //   },
-    //   {
-    //     date: '2016-05-01',
-    //     deadline: '2016-08-20',
-    //     total_score:"100",
-    //     name: '试卷4',
-    //     address: 'No. 189, Grove St, Los Angeles',
-    //   },
-    // ],
     search: '',
   }),
   setup(){
@@ -90,6 +60,12 @@ export default {
     const router = useRouter()
     let isTeacher = computed(() => store.state.user.isTeacher)
     let tableData = computed(() => store.state.user.paperList)
+    let show = computed(() => store.state.user.showData)
+
+    onMounted(()=>{
+      isTeacher = computed(() => store.state.user.isTeacher)
+      tableData = computed(() => store.state.user.paperList)
+    })
 
     function handleView(index, table, row) {
       console.log(index, row);
@@ -121,7 +97,8 @@ export default {
     return {
       isTeacher,
       tableData,
-      handleView
+      handleView,
+      show
     }
 
 
